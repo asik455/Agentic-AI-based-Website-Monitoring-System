@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Sentinel - Secure Authentication & Access Control"/>
+  <title>Sentinel — Access Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <style>
+    /* ─── Clean Enterprise Auth Portal (White / Light Theme by Default) ─── */
+    .auth-page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .auth-top-bar {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .auth-brand-logo {
+      width: 34px;
+      height: 34px;
+    }
+
+    .auth-brand-text {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--shadow-md);
+      padding: 2rem;
+      position: relative;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg-surface-elevated);
+      padding: 3px;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .auth-tab-btn {
+      padding: 0.55rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+    }
+
+    .auth-tab-btn.active {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .auth-header {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .auth-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+
+    .auth-subtitle {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .auth-form-group {
+      margin-bottom: 1.15rem;
+    }
+
+    .auth-form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .input-icon-wrap {
+      position: relative;
+    }
+
+    .input-icon-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 17px;
+      height: 17px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .input-icon-wrap input,
+    .input-icon-wrap select {
+      width: 100%;
+      padding: 0.65rem 2.6rem 0.65rem 2.5rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input-icon-wrap select {
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .input-icon-wrap input:focus,
+    .input-icon-wrap select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-pwd-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    .btn-pwd-toggle:hover {
+      color: var(--text-main);
+    }
+
+    /* Password strength meter */
+    .pwd-meter {
+      margin-top: 0.4rem;
+    }
+    .pwd-meter-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      display: flex;
+    }
+    .pwd-meter-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.25s, background-color 0.25s;
+    }
+    .pwd-meter-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Submit Button */
+    .btn-auth-submit {
+      width: 100%;
+      padding: 0.7rem;
+      background: var(--primary);
+      color: #ffffff;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      transition: background 0.15s ease;
+      box-shadow: var(--shadow-sm);
+      margin-top: 1rem;
+    }
+    .btn-auth-submit:hover:not(:disabled) {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+    }
+    .btn-auth-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Quick Demo Logins */
+    .demo-credentials-box {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .demo-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 0.65rem;
+      font-weight: 600;
+    }
+
+    .demo-chips-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .btn-demo-chip {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      color: var(--text-body);
+      font-size: 0.78rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      transition: all 0.15s;
+      text-align: left;
+    }
+    .btn-demo-chip:hover {
+      background: var(--bg-surface);
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-demo-chip strong {
+      font-size: 0.8rem;
+      color: var(--text-main);
+    }
+    .btn-demo-chip span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Alert / Notice */
+    .auth-alert {
+      padding: 0.65rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .auth-alert.error {
+      background: var(--danger-light);
+      border: 1px solid var(--danger-border);
+      color: var(--danger-text);
+    }
+    .auth-alert.success {
+      background: var(--success-light);
+      border: 1px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    .auth-footer {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+    .auth-footer a {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: color 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .auth-footer a:hover {
+      color: var(--text-main);
+    }
+
+    .db-status-pill {
+      margin-top: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+    }
+    .db-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Ambient Grid Canvas -->
+<div class="bg-mesh" aria-hidden="true"></div>
+
+<div class="auth-page-wrapper">
+
+  <!-- Brand Title & Theme Switcher -->
+  <div class="auth-top-bar">
+    <a href="/" class="auth-brand">
+      <svg class="auth-brand-logo" viewBox="0 0 40 40" fill="none">
+        <defs>
+          <linearGradient id="shieldGradAuth" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#3b82f6"/>
+            <stop offset="1" stop-color="#1d4ed8"/>
+          </linearGradient>
+        </defs>
+        <path d="M20 2L4 9v12c0 8.5 7 16 16 18 9-2 16-9.5 16-18V9L20 2z" fill="url(#shieldGradAuth)"/>
+        <path d="M13 20l5 5 9-10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="auth-brand-text"><strong>Sentinel</strong></div>
+    </a>
+    <button type="button" class="btn-theme-toggle" id="themeToggleBtn" title="Toggle Light / Dark theme" aria-label="Toggle theme">
+      <span class="theme-icon" id="themeIcon">☀️</span>
+    </button>
+  </div>
+
+  <!-- Auth Card -->
+  <div class="auth-card">
+
+    <!-- Switcher Tabs -->
+    <div class="auth-tabs" role="tablist">
+      <button type="button" class="auth-tab-btn active" id="tabLogin" role="tab" aria-selected="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Sign In
+      </button>
+      <button type="button" class="auth-tab-btn" id="tabSignup" role="tab" aria-selected="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7.5" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Create Account
+      </button>
+    </div>
+
+    <!-- Alert / Status Notice -->
+    <div id="authAlert" class="auth-alert" style="display: none;"></div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- FORM 1: SIGN IN                                                        -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <form id="loginForm" autocomplete="on">
+      <div class="auth-header">
+        <h2 class="auth-title">Welcome to Sentinel</h2>
+        <p class="auth-subtitle">Authenticate to access monitoring and security controls</p>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="loginIdent">Username or Email</label>
+        <div class="input-icon-wrap">
+          <input type="text" id="loginIdent" placeholder="analyst@guardian.sec or admin" required autocomplete="username"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="loginPassword">Password</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="loginPassword" placeholder="••••••••••••" required autocomplete="current-password"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <button type="button" class="btn-pwd-toggle" id="toggleLoginPwd" aria-label="Toggle password visibility">👁️</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-auth-submit" id="loginSubmitBtn">
+        <span>Sign In to Sentinel</span>
+      </button>
+
+      <!-- Instant Demo Credentials -->
+      <div class="demo-credentials-box">
+        <div class="demo-title">
+          <span>⚡ Quick Test Logins</span>
+        </div>
+        <div class="demo-chips-grid">
+          <button type="button" class="btn-demo-chip" id="demoAdminBtn">
+            <strong>Alex Vance</strong>
+            <span>Admin / CISO</span>
+          </button>
+          <button type="button" class="btn-demo-chip" id="demoAnalystBtn">
+            <strong>Elena Rostova</strong>
+            <span>Lead SOC Analyst</span>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- FORM 2: SIGN UP / REGISTRATION                                         -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <form id="signupForm" style="display: none;" autocomplete="on">
+      <div class="auth-header">
+        <h2 class="auth-title">Create Sentinel Account</h2>
+        <p class="auth-subtitle">Register a new security operator profile</p>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="regFullName">Full Name</label>
+        <div class="input-icon-wrap">
+          <input type="text" id="regFullName" placeholder="e.g. Maya Lin" required autocomplete="name"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="regUsername">Username</label>
+        <div class="input-icon-wrap">
+          <input type="text" id="regUsername" placeholder="e.g. mayalin_sec" required autocomplete="username"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="regEmail">Work Email</label>
+        <div class="input-icon-wrap">
+          <input type="email" id="regEmail" placeholder="name@organization.com" required autocomplete="email"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="regRole">Operational Role</label>
+        <div class="input-icon-wrap">
+          <select id="regRole" required>
+            <option value="Security Analyst">Security Analyst</option>
+            <option value="DevSecOps Engineer">DevSecOps Engineer</option>
+            <option value="Incident Responder">Incident Responder</option>
+            <option value="AI Safety Researcher">AI Safety Researcher</option>
+            <option value="Chief Information Security Officer">Chief Information Security Officer (CISO)</option>
+          </select>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="regPassword">Password</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="regPassword" placeholder="Minimum 6 characters" required autocomplete="new-password"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <button type="button" class="btn-pwd-toggle" id="toggleRegPwd" aria-label="Toggle password visibility">👁️</button>
+        </div>
+        <!-- Live Strength Meter -->
+        <div class="pwd-meter">
+          <div class="pwd-meter-bar">
+            <div class="pwd-meter-fill" id="pwdMeterFill"></div>
+          </div>
+          <div class="pwd-meter-label">
+            <span id="pwdStrengthText">Strength: Enter password</span>
+            <span id="pwdReqs">Min 6 chars</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-form-group">
+        <label for="regConfirmPassword">Confirm Password</label>
+        <div class="input-icon-wrap">
+          <input type="password" id="regConfirmPassword" placeholder="Repeat password" required autocomplete="new-password"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-auth-submit" id="signupSubmitBtn">
+        <span>Initialize Sentinel Account</span>
+      </button>
+    </form>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="auth-footer">
+    <div class="db-status-pill">
+      <span class="db-status-dot"></span>
+      <span>Database: MongoDB Atlas (Cluster0)</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─── If already authenticated, redirect to dashboard ───
+  const existingToken = localStorage.getItem('guardian_token');
+  if (existingToken) {
+    fetch('/api/auth/me', {
+      headers: { 'Authorization': `Bearer ${existingToken}` }
+    })
+    .then(r => {
+      if (r.ok) {
+        window.location.replace('/');
+      }
+    })
+    .catch(() => {});
+  }
+
+  // ─── Theme Management ───
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const themeIcon = document.getElementById('themeIcon');
+  const currentTheme = localStorage.getItem('sentinel_theme') || 'light';
+  applyTheme(currentTheme);
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+      const active = document.documentElement.getAttribute('data-theme') || 'light';
+      const nextTheme = active === 'light' ? 'dark' : 'light';
+      applyTheme(nextTheme);
+    });
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('sentinel_theme', theme);
+    if (themeIcon) {
+      themeIcon.textContent = theme === 'light' ? '🌙' : '☀️';
+    }
+  }
+
+  // ─── DOM References ───
+  const tabLogin = document.getElementById('tabLogin');
+  const tabSignup = document.getElementById('tabSignup');
+  const loginForm = document.getElementById('loginForm');
+  const signupForm = document.getElementById('signupForm');
+  const authAlert = document.getElementById('authAlert');
+
+  const loginIdent = document.getElementById('loginIdent');
+  const loginPassword = document.getElementById('loginPassword');
+  const toggleLoginPwd = document.getElementById('toggleLoginPwd');
+
+  const regFullName = document.getElementById('regFullName');
+  const regUsername = document.getElementById('regUsername');
+  const regEmail = document.getElementById('regEmail');
+  const regRole = document.getElementById('regRole');
+  const regPassword = document.getElementById('regPassword');
+  const regConfirmPassword = document.getElementById('regConfirmPassword');
+  const toggleRegPwd = document.getElementById('toggleRegPwd');
+
+  const pwdMeterFill = document.getElementById('pwdMeterFill');
+  const pwdStrengthText = document.getElementById('pwdStrengthText');
+
+  const demoAdminBtn = document.getElementById('demoAdminBtn');
+  const demoAnalystBtn = document.getElementById('demoAnalystBtn');
+
+  // ─── Tab Switching ───
+  tabLogin.addEventListener('click', () => {
+    tabLogin.classList.add('active');
+    tabLogin.setAttribute('aria-selected', 'true');
+    tabSignup.classList.remove('active');
+    tabSignup.setAttribute('aria-selected', 'false');
+    loginForm.style.display = 'block';
+    signupForm.style.display = 'none';
+    clearAlert();
+  });
+
+  tabSignup.addEventListener('click', () => {
+    tabSignup.classList.add('active');
+    tabSignup.setAttribute('aria-selected', 'true');
+    tabLogin.classList.remove('active');
+    tabLogin.setAttribute('aria-selected', 'false');
+    signupForm.style.display = 'block';
+    loginForm.style.display = 'none';
+    clearAlert();
+  });
+
+  // Check URL params for ?mode=signup
+  if (new URLSearchParams(window.location.search).get('mode') === 'signup') {
+    tabSignup.click();
+  }
+
+  // ─── Show/Hide Password ───
+  toggleLoginPwd.addEventListener('click', () => {
+    const isPwd = loginPassword.type === 'password';
+    loginPassword.type = isPwd ? 'text' : 'password';
+    toggleLoginPwd.textContent = isPwd ? '🔒' : '👁️';
+  });
+
+  toggleRegPwd.addEventListener('click', () => {
+    const isPwd = regPassword.type === 'password';
+    regPassword.type = isPwd ? 'text' : 'password';
+    toggleRegPwd.textContent = isPwd ? '🔒' : '👁️';
+  });
+
+  // ─── Password Strength Meter ───
+  regPassword.addEventListener('input', () => {
+    const pwd = regPassword.value;
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 10) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    const levels = [
+      { text: 'Too short', color: '#dc2626', pct: '20%' },
+      { text: 'Weak', color: '#d97706', pct: '40%' },
+      { text: 'Moderate', color: '#2563eb', pct: '60%' },
+      { text: 'Strong', color: '#16a34a', pct: '80%' },
+      { text: 'Optimal', color: '#2563eb', pct: '100%' }
+    ];
+
+    if (!pwd) {
+      pwdMeterFill.style.width = '0%';
+      pwdStrengthText.textContent = 'Strength: Enter password';
+      return;
+    }
+
+    const lvl = levels[Math.min(score, 4)];
+    pwdMeterFill.style.width = lvl.pct;
+    pwdMeterFill.style.backgroundColor = lvl.color;
+    pwdStrengthText.textContent = `Strength: ${lvl.text}`;
+    pwdStrengthText.style.color = lvl.color;
+  });
+
+  // ─── Alert Helpers ───
+  function showAlert(msg, isSuccess = false) {
+    authAlert.textContent = msg;
+    authAlert.className = `auth-alert ${isSuccess ? 'success' : 'error'}`;
+    authAlert.style.display = 'flex';
+  }
+  function clearAlert() {
+    authAlert.style.display = 'none';
+  }
+
+  // ─── Demo Auto-Fill Logins ───
+  demoAdminBtn.addEventListener('click', () => {
+    loginIdent.value = 'admin@guardian.sec';
+    loginPassword.value = 'Guardian@2026!';
+    showAlert('Demo Admin credentials populated. Signing in...', true);
+    setTimeout(() => loginForm.dispatchEvent(new Event('submit')), 300);
+  });
+
+  demoAnalystBtn.addEventListener('click', () => {
+    loginIdent.value = 'analyst@guardian.sec';
+    loginPassword.value = 'Analyst@2026!';
+    showAlert('Demo Analyst credentials populated. Signing in...', true);
+    setTimeout(() => loginForm.dispatchEvent(new Event('submit')), 300);
+  });
+
+  // ─── Login Form Submit ───
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearAlert();
+    const submitBtn = document.getElementById('loginSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Verifying Credentials…</span>';
+
+    try {
+      const resp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username_or_email: loginIdent.value.trim(),
+          password: loginPassword.value
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.detail || 'Authentication failed');
+      }
+
+      localStorage.setItem('guardian_token', data.token);
+      localStorage.setItem('guardian_user', JSON.stringify(data.user));
+
+      showAlert(`Welcome back, ${data.user.full_name}! Redirecting...`, true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 700);
+
+    } catch (err) {
+      showAlert(err.message, false);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Sign In to Sentinel</span>';
+    }
+  });
+
+  // ─── Signup Form Submit ───
+  signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearAlert();
+
+    if (regPassword.value !== regConfirmPassword.value) {
+      showAlert('Passwords do not match', false);
+      return;
+    }
+
+    const submitBtn = document.getElementById('signupSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Creating Profile…</span>';
+
+    try {
+      const resp = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: regFullName.value.trim(),
+          username: regUsername.value.trim(),
+          email: regEmail.value.trim(),
+          role: regRole.value,
+          password: regPassword.value
+        })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.detail || 'Registration failed');
+      }
+
+      localStorage.setItem('guardian_token', data.token);
+      localStorage.setItem('guardian_user', JSON.stringify(data.user));
+
+      showAlert(`Account created successfully! Redirecting...`, true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 800);
+
+    } catch (err) {
+      showAlert(err.message, false);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Initialize Sentinel Account</span>';
+    }
+  });
+</script>
+</body>
+</html>

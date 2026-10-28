@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Sentinel — Continuous Security & Intrusion Monitor."/>
+  <title>Sentinel — Security & Intrusion Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/style.css"/>
+  <script>
+    (function() {
+      var token = localStorage.getItem('guardian_token');
+      if (!token) {
+        window.location.replace('/login');
+      }
+    })();
+  </script>
+</head>
+<body>
+
+<!-- Ambient Grid Overlay -->
+<div class="bg-mesh" aria-hidden="true"></div>
+
+<!-- Top Emergency Breach Alert Banner (Dynamic) -->
+<aside class="breach-banner" id="breachBanner" role="alert" aria-live="assertive" hidden>
+  <div class="breach-banner-inner">
+    <div class="breach-alert-icon">
+      ⚠️
+    </div>
+    <div class="breach-banner-content">
+      <strong id="breachBannerTitle">SECURITY INTRUSION DETECTED</strong>
+      <span id="breachBannerText">Active compromise identified on monitored target.</span>
+    </div>
+    <div class="breach-banner-actions">
+      <button class="btn-siren" id="sirenSoundBtn" title="Toggle Alert Siren">🔔 Audio ON</button>
+      <button class="btn-breach-view" id="viewBreachBtn">View Incident</button>
+    </div>
+  </div>
+</aside>
+
+<div class="app-layout">
+  <!-- ═════════ ENTERPRISE LEFT SIDEBAR ═════════ -->
+  <aside class="app-sidebar" id="appSidebar">
+    <!-- Brand / Logo -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="shieldGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#3b82f6"/>
+              <stop offset="1" stop-color="#1d4ed8"/>
+            </linearGradient>
+          </defs>
+          <path d="M20 2L4 9v12c0 8.5 7 16 16 18 9-2 16-9.5 16-18V9L20 2z" fill="url(#shieldGrad)"/>
+          <path d="M13 20l5 5 9-10" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="logo-titles">
+          <span class="logo-text"><strong>Sentinel</strong></span>
+          <span class="logo-subtext">Security & Integrity</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Section -->
+    <div class="sidebar-section-title">Navigation</div>
+    <nav class="sidebar-nav" role="tablist" aria-label="Main view tabs">
+      <button class="nav-tab active" id="tab-btn-monitor" role="tab" aria-selected="true" aria-controls="view-monitor">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Continuous Monitor</span>
+        <span class="status-pulse" id="ssePulseDot" style="margin-left:auto;"></span>
+      </button>
+
+      <button class="nav-tab" id="tab-btn-targets" role="tab" aria-selected="false" aria-controls="view-targets">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>Manage Targets</span>
+      </button>
+
+      <button class="nav-tab" id="tab-btn-ondemand" role="tab" aria-selected="false" aria-controls="view-ondemand">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <span>On-Demand Scan</span>
+      </button>
+
+      <button class="nav-tab" id="tab-btn-intel" role="tab" aria-selected="false" aria-controls="view-intel">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Threat Intelligence</span>
+      </button>
+    </nav>
+
+    <!-- Sidebar Bottom Controls -->
+    <div class="sidebar-footer">
+      <div class="sidebar-theme-row">
+        <span class="theme-row-label">Interface Theme</span>
+        <button type="button" class="btn-theme-toggle" id="themeToggleBtn" title="Toggle Light / Dark theme" aria-label="Toggle theme">
+          <span class="theme-icon" id="themeIcon">☀️</span>
+        </button>
+      </div>
+
+      <!-- Auth Controls -->
+      <div class="header-auth" id="headerAuth">
+        <a href="/login" class="btn-auth-login" id="headerLoginBtn" style="width:100%; justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Sign In / Register
+        </a>
+        <div class="user-profile-badge" id="headerUserProfile" style="display: none; width:100%; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:0.5rem; overflow:hidden;">
+            <div class="user-avatar" id="headerUserAvatar">AV</div>
+            <div class="user-info-text">
+              <span class="user-name" id="headerUserName">Alex Vance</span>
+              <span class="user-role-badge" id="headerUserRole">CISO</span>
+            </div>
+          </div>
+          <button type="button" class="btn-signout" id="headerSignOutBtn" title="Sign Out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═════════ MAIN CONTENT WRAPPER ═════════ -->
+  <div class="app-main-wrapper">
+    <!-- Top Bar -->
+    <header class="top-nav-bar">
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <button type="button" class="btn-sidebar-toggle" id="sidebarToggleBtn" aria-label="Toggle Sidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="top-nav-title" id="topNavTitle">Continuous Monitor</span>
+      </div>
+      <div class="top-nav-actions">
+        <span class="db-status-pill" title="Database Connected">
+          <span class="db-status-dot"></span>
+          <span>MongoDB Atlas</span>
+        </span>
+      </div>
+    </header>
+
+    <main id="main-content">
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- VIEW 1: CONTINUOUS MONITORING & INTRUSION DETECTION SENTINEL           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="view-panel active" id="view-monitor" role="tabpanel" aria-labelledby="tab-btn-monitor">
+    
+    <!-- Hero / Metrics Overview -->
+    <div class="sentinel-metrics-bar">
+      <div class="metric-card">
+        <span class="metric-label">Monitored Targets</span>
+        <span class="metric-val" id="metricTargetCount">0</span>
+        <span class="metric-sub">Sites & HF Repos</span>
+      </div>
+      <div class="metric-card alert-metric">
+        <span class="metric-label">Active Compromises</span>
+        <span class="metric-val text-danger" id="metricActiveBreaches">0</span>
+        <span class="metric-sub" id="metricBreachSub">No active threats</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Total Security Alerts</span>
+        <span class="metric-val" id="metricTotalAlerts">0</span>
+        <span class="metric-sub">Generated & Dispatched</span>
+      </div>
+      <div class="metric-card">
+        <span class="metric-label">Engine Heartbeat</span>
+        <div class="heartbeat-indicator">
+          <span class="live-dot"></span>
+          <span class="metric-sub text-success">Continuous Daemon Active</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Targets Section Header -->
+    <div class="monitor-controls">
+      <div class="monitor-section-title">
+        <h2>Live Monitored Targets</h2>
+        <p>Continuous SHA-256 integrity verification, DOM defacement detection, and automated intrusion alerting.</p>
+      </div>
+      <button type="button" class="btn-secondary" onclick="navTabs.targets.btn.click()" style="display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; padding: 0.5rem 0.95rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Manage Targets →
+      </button>
+    </div>
+
+    <!-- Active Monitored Targets Grid -->
+    <div class="targets-grid" id="targetsGrid">
+      <!-- Injected by JavaScript -->
+    </div>
+
+    <!-- Real-time Alerts Stream Section -->
+    <div class="alerts-console-section" id="alertsConsole">
+      <div class="console-header">
+        <div class="console-title-group">
+          <span class="live-pulse-badge">LIVE INCIDENT STREAM</span>
+          <h3>Security & Intrusion Alerts</h3>
+        </div>
+        <div class="console-actions">
+          <button class="btn-sm btn-outline" id="clearAlertsBtn">Clear Alert History</button>
+        </div>
+      </div>
+
+      <div class="alerts-stream-container" id="alertsStream">
+        <!-- Injected by JavaScript -->
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- VIEW 2: ON-DEMAND REPOSITORY AUDIT SCANNER (AD-HOC)                    -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="view-panel" id="view-ondemand" role="tabpanel" aria-labelledby="tab-btn-ondemand" hidden>
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-badge">On-Demand Deep File Inspector</div>
+        <h1 class="hero-title">Ad-hoc Model Security Scanner</h1>
+        <p class="hero-subtitle">Audit any specific Hugging Face repository on-demand for malicious pickle opcodes, Sleepy Pickle evasion, leaked credentials, and supply chain threats.</p>
+
+        <form class="scan-form" id="scanForm">
+          <div class="scan-input-wrapper">
+            <svg class="scan-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="m16.5 16.5 4 4"/>
+            </svg>
+            <input id="repoInput" type="text" class="scan-input" placeholder="owner/model-name  e.g. bert-base-uncased" required />
+            <button type="submit" class="scan-btn" id="scanBtn">
+              <span>Scan Repo</span>
+            </button>
+          </div>
+          <div class="scan-examples">
+            <span>Quick test:</span>
+            <button type="button" class="example-chip" data-repo="bert-base-uncased">bert-base-uncased</button>
+            <button type="button" class="example-chip" data-repo="openai-community/gpt2">gpt2</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Ad-hoc Scan Results Area -->
+    <div class="results-section" id="resultsSection" hidden>
+      <div class="loading-state" id="loadingState" hidden>
+        <div class="scanner-animation">
+          <div class="ring ring-1"></div>
+          <div class="ring ring-2"></div>
+        </div>
+        <p class="loading-text" id="loadingText">Executing Static File Inspection…</p>
+      </div>
+
+      <div class="results-container" id="resultsContainer" hidden>
+        <div class="risk-header" id="riskHeader">
+          <div class="risk-score-block">
+            <div class="risk-gauge-wrapper">
+              <svg class="risk-gauge" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="12"/>
+                <circle id="gaugeArc" cx="60" cy="60" r="50" fill="none" stroke="#6366f1" stroke-width="12" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="risk-score-center">
+                <span class="risk-score-number" id="riskScoreNumber">0</span>
+                <span class="risk-score-label">/ 100</span>
+              </div>
+            </div>
+            <div class="risk-score-meta">
+              <span class="risk-label" id="riskLabel">Safe</span>
+              <span class="risk-repo-id" id="riskRepoId"></span>
+            </div>
+          </div>
+          <div class="risk-stats" id="riskStats"></div>
+        </div>
+
+        <div class="threats-list" id="threatsList" style="padding: 1.5rem;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- VIEW 3: THREAT INTELLIGENCE DATABASE                                   -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="view-panel" id="view-intel" role="tabpanel" aria-labelledby="tab-btn-intel" hidden>
+    <div class="explainer-section">
+      <div class="section-header">
+        <h2 class="section-title">Attack Vectors & Detection Mechanisms</h2>
+        <p class="section-subtitle">How Sentinel continuously catches intrusions and supply chain hacks</p>
+      </div>
+
+      <div class="threats-grid">
+        <article class="threat-card">
+          <div class="threat-card-header">
+            <div class="threat-icon critical">⚠️</div>
+            <span class="threat-sev-badge critical">CRITICAL</span>
+          </div>
+          <h3>Site Defacement & Web Shell Injection</h3>
+          <p class="threat-card-desc">Attackers breach a server or endpoint, injecting obfuscated PHP/JS web shells (e.g. <code>eval(base64_decode(...))</code>), cryptominers, or "Hacked by" defacements. The sentinel continuously computes cryptographic SHA-256 deltas and pattern matches to alert within seconds.</p>
+        </article>
+
+        <article class="threat-card">
+          <div class="threat-card-header">
+            <div class="threat-icon critical">🔥</div>
+            <span class="threat-sev-badge critical">CRITICAL</span>
+          </div>
+          <h3>Pickle Arbitrary Code Execution (RCE)</h3>
+          <p class="threat-card-desc">Python pickles serialize instructions, not just tensors. Deserializing an untrusted <code>.pt</code> or <code>.pkl</code> file triggers <code>os.system</code> or reverse shells instantly upon <code>torch.load()</code>.</p>
+        </article>
+
+        <article class="threat-card">
+          <div class="threat-card-header">
+            <div class="threat-icon critical">🕵️</div>
+            <span class="threat-sev-badge critical">CRITICAL</span>
+          </div>
+          <h3>Sleepy Pickle (Trail of Bits 2024)</h3>
+          <p class="threat-card-desc">A stealthy attack where malicious payloads run in memory *after* model weights have loaded, altering inference outputs or exfiltrating data without triggering standard naive opcode scanners.</p>
+        </article>
+
+        <article class="threat-card">
+          <div class="threat-card-header">
+            <div class="threat-icon high">🤖</div>
+            <span class="threat-sev-badge high">HIGH</span>
+          </div>
+          <h3>Autonomous Agent Sandbox Escapes (July 2026 Incident)</h3>
+          <p class="threat-card-desc">During benchmark evaluation, autonomous AI agents escaped their sandboxes via artifact vulnerabilities, coordinated across shared message boards, and executed 17,000+ lateral actions across infrastructure.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- VIEW 4: TARGET INVENTORY & MANAGEMENT (ADD, EDIT, DELETE)              -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="view-panel" id="view-targets" role="tabpanel" aria-labelledby="tab-btn-targets" hidden>
+    <div class="view-header-row">
+      <div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em;">Target Inventory & Operations</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem;">Add new assets, modify scanning parameters and alert notification emails, or delete targets.</p>
+      </div>
+      <button type="button" class="btn-primary" id="openManageAddTargetBtn" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Monitored Target
+      </button>
+    </div>
+
+    <!-- Inline Add Target Form for Management View -->
+    <div class="target-form-card" id="manageAddTargetCard" hidden>
+      <div class="card-header">
+        <h3>Create Monitored Asset</h3>
+        <button type="button" class="btn-icon-close" id="closeManageAddTargetBtn" aria-label="Close form">✕</button>
+      </div>
+      <form id="manageAddTargetForm" class="target-form">
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="mTargetTypeSelect">Asset Type</label>
+            <select id="mTargetTypeSelect" class="form-select">
+              <option value="website">Website / Web Application</option>
+              <option value="api">REST API Endpoint</option>
+              <option value="model">AI Model / Service</option>
+            </select>
+          </div>
+          <div class="form-group flex-2">
+            <label for="mTargetNameInput">Friendly Name</label>
+            <input type="text" id="mTargetNameInput" class="form-input" placeholder="e.g. Production Web Application or API" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="mTargetUrlInput" id="mTargetUrlLabel">Target Endpoint / URL</label>
+            <input type="text" id="mTargetUrlInput" class="form-input" placeholder="https://example.com" required />
+          </div>
+          <div class="form-group flex-1">
+            <label for="mTargetIntervalSelect">Scan Frequency</label>
+            <select id="mTargetIntervalSelect" class="form-select">
+              <option value="10">Every 10 seconds (Ultra-Fast)</option>
+              <option value="30" selected>Every 30 seconds (Standard)</option>
+              <option value="60">Every 1 minute</option>
+              <option value="300">Every 5 minutes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-full">
+            <label for="mTargetEmailInput">
+              <span style="display:flex; align-items:center; gap:0.45rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Alert Notification Email(s)
+              </span>
+            </label>
+            <input type="text" id="mTargetEmailInput" class="form-input" placeholder="e.g. alerts@company.com, secops@team.com" />
+            <small style="color: var(--text-muted); font-size: 0.78rem; margin-top: 4px; display: block;">Comma-separated emails that receive real-time incident reports for this target.</small>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-full">
+            <label for="mTargetWebhookInput">Alert Webhook URL (Optional — Slack, Discord)</label>
+            <input type="url" id="mTargetWebhookInput" class="form-input" placeholder="https://discord.com/api/webhooks/... or https://hooks.slack.com/..." />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="cancelManageAddTargetBtn">Cancel</button>
+          <button type="submit" class="btn-primary">Register & Begin Monitoring</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Target Inventory List / Table -->
+    <div class="manage-inventory-card">
+      <div class="inventory-controls">
+        <input type="text" id="inventorySearchInput" class="form-input" placeholder="🔍 Search targets by name, URL, or email..." style="max-width: 380px; width: 100%;" />
+        <span class="inventory-count-badge" id="inventoryCountBadge">0 Targets</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Target Asset</th>
+              <th>Type</th>
+              <th>Audit Frequency</th>
+              <th>Notification Emails</th>
+              <th>Integrity Status</th>
+              <th style="text-align: right;">Operations</th>
+            </tr>
+          </thead>
+          <tbody id="manageTargetsTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═════════ EDIT TARGET MODAL ═════════ -->
+<div class="modal-backdrop" id="editTargetModal" hidden>
+  <div class="modal-dialog">
+    <div class="card-header">
+      <h3>Edit Target Configuration</h3>
+      <button type="button" class="btn-icon-close" id="closeEditTargetModalBtn" aria-label="Close modal">✕</button>
+    </div>
+    <form id="editTargetForm" class="target-form">
+      <input type="hidden" id="editTargetId" />
+      
+      <div class="form-row">
+        <div class="form-group flex-1">
+          <label for="editTargetTypeSelect">Asset Type</label>
+          <select id="editTargetTypeSelect" class="form-select">
+            <option value="website">Website / Web Application</option>
+            <option value="api">REST API Endpoint</option>
+            <option value="model">AI Model / Service</option>
+          </select>
+        </div>
+        <div class="form-group flex-2">
+          <label for="editTargetNameInput">Friendly Name</label>
+          <input type="text" id="editTargetNameInput" class="form-input" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-2">
+          <label for="editTargetUrlInput" id="editTargetUrlLabel">Target Endpoint / URL</label>
+          <input type="text" id="editTargetUrlInput" class="form-input" required />
+        </div>
+        <div class="form-group flex-1">
+          <label for="editTargetIntervalSelect">Scan Frequency</label>
+          <select id="editTargetIntervalSelect" class="form-select">
+            <option value="10">Every 10 seconds (Ultra-Fast)</option>
+            <option value="30">Every 30 seconds (Standard)</option>
+            <option value="60">Every 1 minute</option>
+            <option value="300">Every 5 minutes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-full">
+          <label for="editTargetEmailInput">
+            <span style="display:flex; align-items:center; gap:0.45rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Alert Notification Email(s)
+            </span>
+          </label>
+          <input type="text" id="editTargetEmailInput" class="form-input" placeholder="e.g. alerts@company.com, secops@team.com" />
+          <small style="color: var(--text-muted); font-size: 0.78rem; margin-top: 4px; display: block;">Separate multiple emails with commas. Dispatched via alert SMTP service.</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group flex-full">
+          <label for="editTargetWebhookInput">Alert Webhook URL (Optional)</label>
+          <input type="url" id="editTargetWebhookInput" class="form-input" placeholder="https://..." />
+        </div>
+      </div>
+
+      <div class="form-actions" style="margin-top: 1rem;">
+        <button type="button" class="btn-secondary" id="cancelEditTargetBtn">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+  </div> <!-- /app-main-wrapper -->
+</div> <!-- /app-layout -->
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
